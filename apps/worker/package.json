@@ -1,0 +1,33 @@
+{
+  "name": "@viraxstudio/worker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "npm run build --workspace @viraxstudio/shared",
+    "dev": "tsx watch src/index.ts",
+    "prebuild": "npm run build --workspace @viraxstudio/shared",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@aws-sdk/client-s3": "^3.1006.0",
+    "@viraxstudio/shared": "file:../../packages/shared",
+    "bullmq": "^5.70.4",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
+    "elevenlabs": "^1.59.0",
+    "google-auth-library": "^10.6.1",
+    "ioredis": "^5.10.0",
+    "postgres": "^3.4.8",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,4 +1,4 @@
-name: 🚀 Deploy ViraxStudio to o2switch
+name: Deploy ViraxStudio Web
 
 on:
   push:
@@ -7,43 +7,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy
+  build-and-deploy-web:
+    name: Build and Deploy Web
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js 20
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: 🏗️ Build ViraxStudio
+      - name: Build monorepo
         run: npm run build
         env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      - name: 📤 Deploy via FTP to o2switch
+      - name: Deploy web via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          local-dir: ./dist/
+          local-dir: ./apps/web/dist/
           dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
 
-      - name: ✅ Deployment complete
+      - name: Deployment complete
         run: |
-          echo "🎉 ViraxStudio déployé sur viraxstudio.levelingcoder.com"
-          echo "🌐 URL: https://viraxstudio.levelingcoder.com"
+          echo "ViraxStudio web deployed to https://viraxstudio.levelingcoder.com"

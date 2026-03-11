@@ -1,22 +1,18 @@
 {
-  "name": "viraxstudio",
+  "name": "viraxstudio-platform",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.0"
-  },
-  "devDependencies": {
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.4.1"
+    "dev:web": "npm run dev --workspace @viraxstudio/web",
+    "dev:api": "npm run dev --workspace @viraxstudio/api",
+    "dev:worker": "npm run dev --workspace @viraxstudio/worker",
+    "build": "npm run build --workspace @viraxstudio/shared && npm run build --workspace @viraxstudio/api && npm run build --workspace @viraxstudio/worker && npm run build --workspace @viraxstudio/web",
+    "test": "npm run test --workspace @viraxstudio/shared && npm run test --workspace @viraxstudio/api && npm run test --workspace @viraxstudio/worker",
+    "db:generate": "npm run db:generate --workspace @viraxstudio/api",
+    "db:migrate": "npm run db:migrate --workspace @viraxstudio/api"
   }
 }
