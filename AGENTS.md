@@ -1,76 +1,68 @@
 # AGENTS.md
 
-## Objectif produit
-- ViraxStudio est une application web React/Vite qui aide a automatiser un pipeline YouTube: configuration de chaine, generation de script, creation de voix off, puis publication.
-- Le produit actuel est 100% front-end. Les cles API et tokens sont stockes dans `localStorage` sous la cle unique `virax_config`.
-- Toute nouvelle fonctionnalite doit rester compatible avec le deploiement statique Vite et avec le workflow GitHub Actions qui publie le dossier `dist/` sur o2switch lors d'un push sur `main`.
+## Mission produit
+- ViraxStudio est maintenant un monorepo full-stack pour automatiser une chaine YouTube de A a Z sans quitter l'application.
+- Le flux cible: login owner Google, coffre-fort de secrets, creation de run, generation IA, assets, voix, rendu, upload YouTube prive, review editoriale, puis publication ou programmation.
+- Le projet est mono-owner pour cette phase. Toute decision produit et securite doit preserver ce mode de fonctionnement.
 
-## Stack et architecture
-- React 18 + Vite 5
-- React Router v6
-- Styles majoritairement inline, avec base globale dans `src/index.css`
-- Pages principales:
-  - `src/pages/Dashboard.jsx`
-  - `src/pages/ChannelSetup.jsx`
-  - `src/pages/ScriptGen.jsx`
-  - `src/pages/VideoBuilder.jsx`
-  - `src/pages/Publisher.jsx`
-  - `src/pages/Settings.jsx`
-- Shell global:
-  - `src/App.jsx` gere le state `config` et le persiste dans `localStorage`
-  - `src/components/Layout.jsx` gere la navigation et le cadre responsive global
+## Architecture du depot
+- `apps/web`: front React/Vite. L'application parle uniquement a l'API backend; elle ne doit plus appeler Anthropic, ElevenLabs ou YouTube directement.
+- `apps/api`: API Fastify. Gere l'auth owner, les integrations, les profils pipeline, les runs, la review et les demandes de publication.
+- `apps/worker`: worker BullMQ + scheduler. Gere les jobs longs, le rendu FFmpeg, l'upload prive et la publication YouTube.
+- `packages/shared`: schema Drizzle, contrats Zod, utilitaires de chiffrement et logique de pipeline partagee.
 
-## Invariants a preserver
-- Ne pas changer la cle `localStorage` `virax_config` sans migration explicite.
-- Ne pas casser les routes existantes:
+## Invariants critiques
+- Ne pas casser la cle `localStorage` `virax_config`, mais ne l'utiliser que pour des preferences UI et la migration legacy. Ne pas y reintroduire de secret comme source de verite.
+- Ne pas renvoyer une cle API ou un refresh token en clair au front. Les reponses UI ne doivent exposer que des statuts, masques, IDs ou metadata non sensibles.
+- Preserver les routes web:
   - `/`
   - `/channel`
   - `/script`
   - `/video`
   - `/publish`
   - `/settings`
-- Ne pas introduire de dependance serveur obligatoire: l'application doit continuer a fonctionner comme site statique Vite.
-- Garder le workflow `.github/workflows/deploy.yml` compatible avec un `npm ci` puis `npm run build`.
-- Preserver le look actuel: theme sombre, accents rouge/orange, cartes contrastees, navigation laterale desktop.
+- Preserver les endpoints backend versionnes sous `/api/v1`.
+- Garder le workflow web compatible avec `npm ci` puis `npm run build`.
 
-## Regles de modification
-- Preferer des changements simples et lisibles plutot qu'une abstraction prematuree.
-- Si une nouvelle UI est ajoutee, reutiliser les classes globales responsives existantes avant d'introduire un nouveau systeme.
-- Les composants doivent rester robustes sur mobile, tablette et desktop. Eviter:
-  - les largeurs fixes
-  - les grilles `1fr 1fr` sans fallback mobile
-  - les `display:flex` sans `flex-wrap` quand le contenu peut s'allonger
-- Si une nouvelle cle ou preference est stockee, l'ajouter dans l'objet `config` sans supprimer les cles deja utilisees.
-- Pour les liens internes, preferer `Link`/`NavLink` de `react-router-dom`.
-- Pour les liens externes, conserver `target="_blank"` avec `rel="noopener noreferrer"`.
+## Securite a respecter
+- Le chiffrement at-rest passe par `APP_ENCRYPTION_KEY` et `packages/shared/src/server/encryption.ts`.
+- Toute nouvelle integration se stocke dans `integrations` + `integration_secrets`, jamais dans le navigateur.
+- L'auth owner doit continuer a verifier `OWNER_GOOGLE_EMAIL` cote serveur.
+- Les cookies de session restent `httpOnly`; ne pas basculer la session vers `localStorage`.
+- Ne jamais commit de secret, token, dump DB ou media genere reel.
+
+## Workflow de modification recommande
+1. Lire d'abord `apps/web/src/App.jsx`, `apps/api/src/app.ts`, `apps/worker/src/index.ts` et le schema partage pour comprendre le flux complet.
+2. Si un changement touche un contrat front/back, modifier d'abord `packages/shared/src/contracts/*` puis aligner API et front.
+3. Si un changement touche la persistence, modifier `packages/shared/src/db/schema.ts` puis regenerer les migrations.
+4. Si un changement touche le pipeline, verifier les impacts API, worker, review et publication ensemble.
+5. Garder le responsive complet du front. Toute nouvelle vue doit fonctionner sur mobile, tablette et desktop.
+
+## Conventions de code
+- Preferer des composants et fonctions simples, lisibles, testables.
+- Reutiliser les contrats Zod partages plutot que du JSON ad hoc.
+- Cote worker, preferer des etapes de pipeline idempotentes ou reset explicite avant regeneration.
+- Cote web, centraliser les appels backend dans `apps/web/src/lib/api.js`.
+- Cote API, maintenir une separation claire routes / services / lib / db.
+- Cote worker, maintenir une separation claire jobs / providers / services / lib.
 
 ## Zones sensibles
-- `ChannelSetup.jsx`: gere OAuth Google via hash URL et stocke le token dans `virax_config`.
-- `ScriptGen.jsx` et `Publisher.jsx`: consomment l'API Anthropic directement depuis le navigateur.
-- `VideoBuilder.jsx`: consomme ElevenLabs directement depuis le navigateur.
-- `Publisher.jsx`: envoie les fichiers a l'API YouTube avec upload resumable.
-- Toute modification sur ces pages doit conserver les flux existants ou expliciter une migration.
-
-## Workflow recommande pour ajouter une fonctionnalite
-1. Lire `src/App.jsx`, `src/components/Layout.jsx` et la page cible pour comprendre l'etat stocke et le parcours utilisateur.
-2. Verifier si le changement doit affecter le responsive global ou seulement une page.
-3. Reutiliser les classes de `src/index.css` pour les conteneurs, grilles, boutons et banners.
-4. Garder la logique metier separee des ajustements visuels.
-5. Tester au minimum:
-   - `npm run build`
-   - navigation entre pages
-   - absence de scroll horizontal
-   - rendu mobile autour de 320-375 px
+- `apps/api/src/lib/google.ts` et `apps/worker/src/lib/google.ts`: flux OAuth / refresh token.
+- `packages/shared/src/server/encryption.ts`: chiffrement et hash.
+- `apps/worker/src/services/pipeline.ts`: orchestration complete d'un run.
+- `apps/web/src/pages/Settings.jsx`: migration legacy et configuration des integrations.
+- `.github/workflows/deploy.yml`: ne deploie que le web statique; ne pas casser le chemin `apps/web/dist`.
 
 ## Checklist avant push
 - `npm ci`
 - `npm run build`
-- verifier que les nouvelles cartes, formulaires et CTA se replient correctement en mobile
-- verifier qu'aucun lien interne ne provoque de comportement inattendu
-- verifier que les secrets ne sont jamais commit
-- verifier que le diff ne modifie pas involontairement le workflow de deploiement
+- `npm run test`
+- verifier qu'aucune cle sensible n'est exposee au front
+- verifier que le front reste responsive sans scroll horizontal
+- verifier qu'un run peut au minimum etre cree, suivi et envoye en review
+- verifier que le diff ne modifie pas involontairement le deploiement web
 
-## Git et publication
-- Travailler sur une branche `codex/...` puis fusionner dans `main` pour publier.
-- Un push sur `main` declenche automatiquement le workflow de deploiement GitHub Actions.
-- Si le changement touche le responsive, decrire dans le compte-rendu les breakpoints verifies et les zones sensibles restantes.
+## Publication
+- Travailler sur une branche `codex/...`.
+- Fusionner vers `main` pour publier le web via GitHub Actions.
+- Si le backend ou le worker changent, documenter clairement les variables d'environnement et les pre-requis de deploiement separes.

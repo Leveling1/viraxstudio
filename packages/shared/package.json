@@ -1,0 +1,45 @@
+{
+  "name": "@viraxstudio/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts/index.d.ts",
+      "default": "./dist/contracts/index.js"
+    },
+    "./db/schema": {
+      "types": "./dist/db/schema.d.ts",
+      "default": "./dist/db/schema.js"
+    },
+    "./server/encryption": {
+      "types": "./dist/server/encryption.d.ts",
+      "default": "./dist/server/encryption.js"
+    },
+    "./server/run-machine": {
+      "types": "./dist/server/run-machine.d.ts",
+      "default": "./dist/server/run-machine.js"
+    },
+    "./server/queues": {
+      "types": "./dist/server/queues.d.ts",
+      "default": "./dist/server/queues.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
