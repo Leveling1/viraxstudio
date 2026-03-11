@@ -1,0 +1,1 @@
+window.__VIRAX_API_BASE_URL__ = window.__VIRAX_API_BASE_URL__ || ''
