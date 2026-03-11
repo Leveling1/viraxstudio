@@ -9,14 +9,31 @@ import {
   runsResponseSchema,
 } from '@viraxstudio/shared/contracts'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+function normalizeBaseUrl(value) {
+  return typeof value === 'string' ? value.trim().replace(/\/$/, '') : ''
+}
 
-function buildUrl(path) {
+function readRuntimeApiBaseUrl() {
+  if (typeof window === 'undefined') return ''
+  if (typeof window.__VIRAX_API_BASE_URL__ === 'string') {
+    return window.__VIRAX_API_BASE_URL__
+  }
+  const meta = document.querySelector('meta[name="virax-api-base-url"]')
+  return meta?.getAttribute('content') || ''
+}
+
+const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL || readRuntimeApiBaseUrl())
+
+export function getApiBaseUrl() {
+  return API_BASE_URL
+}
+
+export function buildApiUrl(path) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path
 }
 
 export function buildGoogleAuthStartUrl() {
-  return buildUrl('/api/v1/auth/google/start?mode=redirect')
+  return buildApiUrl('/api/v1/auth/google/start?mode=redirect')
 }
 
 async function request(path, options = {}) {
@@ -26,7 +43,7 @@ async function request(path, options = {}) {
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(buildUrl(path), {
+  const response = await fetch(buildApiUrl(path), {
     method: options.method || 'GET',
     credentials: 'include',
     headers,
@@ -50,7 +67,7 @@ async function request(path, options = {}) {
 }
 
 export function openRunEvents(runId, onMessage) {
-  const source = new EventSource(buildUrl(`/api/v1/runs/${runId}/events`), { withCredentials: true })
+  const source = new EventSource(buildApiUrl(`/api/v1/runs/${runId}/events`), { withCredentials: true })
   source.onmessage = event => {
     try {
       onMessage(runDetailSchema.parse(JSON.parse(event.data)))

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import ChannelSetup from './pages/ChannelSetup.jsx'
+import NotFound from './pages/NotFound.jsx'
 import ScriptGen from './pages/ScriptGen.jsx'
 import VideoBuilder from './pages/VideoBuilder.jsx'
 import Publisher from './pages/Publisher.jsx'
@@ -10,6 +11,7 @@ import Settings from './pages/Settings.jsx'
 import {
   createRun,
   buildGoogleAuthStartUrl,
+  getHealth,
   getRunDetail,
   getSession,
   listIntegrations,
@@ -175,10 +177,7 @@ export default function App() {
     let cancelled = false
     const tick = async () => {
       try {
-        const healthUrl = `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}/api/v1/health`
-        const response = await fetch(healthUrl)
-        if (!response.ok) throw new Error('health check failed')
-        const payload = await response.json()
+        const payload = await getHealth()
         if (!cancelled) {
           setHealth({ ok: !!payload.ok, checkedAt: payload.timestamp || new Date().toISOString() })
         }
@@ -271,8 +270,13 @@ export default function App() {
     async refreshAll() {
       await refreshWorkspace({ preserveSelection: true })
     },
-    startGoogleLogin() {
-      window.location.href = buildGoogleAuthStartUrl()
+    async startGoogleLogin() {
+      try {
+        await getHealth()
+        window.location.href = buildGoogleAuthStartUrl()
+      } catch {
+        pushNotice('error', "Connexion Google impossible: le backend API n'est pas joignable. Verifie VITE_API_BASE_URL et le deploiement backend.")
+      }
     },
     async logoutOwner() {
       try {
@@ -413,7 +417,7 @@ export default function App() {
           <Route path="video" element={<VideoBuilder ctx={ctx} />} />
           <Route path="publish" element={<Publisher ctx={ctx} />} />
           <Route path="settings" element={<Settings ctx={ctx} />} />
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

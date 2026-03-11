@@ -909,6 +909,66 @@ code {
   color: #001911;
 }
 
+.not-found-card {
+  min-height: min(72vh, 760px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.not-found-card::before {
+  content: '';
+  position: absolute;
+  inset: auto -15% -30% auto;
+  width: 320px;
+  height: 320px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 91, 77, 0.24), rgba(255, 140, 58, 0.04) 60%, transparent 72%);
+  pointer-events: none;
+}
+
+.not-found-code {
+  font-family: var(--font-head);
+  font-size: clamp(5rem, 18vw, 9.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.12em;
+  color: var(--text);
+  text-shadow: 0 24px 60px rgba(255, 91, 77, 0.18);
+}
+
+.not-found-badge {
+  display: inline-flex;
+  align-self: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 140, 58, 0.22);
+  background: rgba(255, 140, 58, 0.08);
+  color: var(--orange);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.not-found-title {
+  max-width: 14ch;
+  margin: 0 auto;
+}
+
+.not-found-copy {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.not-found-actions {
+  justify-content: center;
+  margin-top: 6px;
+}
+
 .inline-link {
   color: var(--orange);
   text-decoration: none;
