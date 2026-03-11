@@ -1,52 +1,140 @@
-import { Outlet, NavLink } from 'react-router-dom'
-import { useState } from 'react'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
 const NAV = [
-  { to: '/',         icon: '⚡', label: 'Dashboard' },
-  { to: '/channel',  icon: '??', label: 'Ma Chaine' },
-  { to: '/script',   icon: '✍', label: 'Script IA' },
-  { to: '/video',    icon: '??', label: 'Video' },
-  { to: '/publish',  icon: '??', label: 'Publier' },
-  { to: '/settings', icon: '⚙', label: 'Reglages' },
+  { to: '/', icon: 'DB', label: 'Dashboard' },
+  { to: '/channel', icon: 'YT', label: 'Ma Chaine' },
+  { to: '/script', icon: 'AI', label: 'Script IA' },
+  { to: '/video', icon: 'VD', label: 'Video' },
+  { to: '/publish', icon: 'UP', label: 'Publier' },
+  { to: '/settings', icon: 'ST', label: 'Reglages' },
 ]
 
 export default function Layout({ ctx }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 900)
+  const location = useLocation()
   const channelReady = !!ctx.config.channelName
   const apiReady = !!ctx.config.claudeKey
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 900)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isMobile) {
+      document.body.style.overflow = ''
+      return
+    }
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobile, mobileOpen])
+
+  const sidebarWidth = collapsed ? 72 : 220
+  const sidebarClassName = [
+    'sidebar',
+    collapsed ? 'is-collapsed' : '',
+    mobileOpen ? 'is-open' : '',
+  ].filter(Boolean).join(' ')
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      <aside style={{ width: collapsed ? 64 : 220, background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 100, overflow: 'hidden' }}>
-        <div style={{ padding: collapsed ? '20px 0' : '20px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, justifyContent: collapsed ? 'center' : 'flex-start', minHeight: 64 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: 'linear-gradient(135deg, var(--red), var(--orange))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 900, animation: 'glow 3s ease infinite' }}>▶</div>
-          {!collapsed && <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.5, whiteSpace: 'nowrap' }}>Virax<span style={{ color: 'var(--red)' }}>Studio</span></span>}
+    <div className="app-shell">
+      <button
+        type="button"
+        aria-label="Fermer le menu"
+        className={`app-backdrop${mobileOpen ? ' is-visible' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
+
+      <aside className={sidebarClassName}>
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-mark">▶</div>
+          <span className="sidebar-brand-text">
+            Virax<span style={{ color: 'var(--red)' }}>Studio</span>
+          </span>
         </div>
-        <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+
+        <nav className="sidebar-nav">
           {NAV.map(item => (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'}
-              style={({ isActive }) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '10px 0' : '10px 12px', justifyContent: collapsed ? 'center' : 'flex-start', borderRadius: 10, background: isActive ? 'rgba(255,59,59,0.12)' : 'transparent', color: isActive ? 'var(--red)' : 'var(--muted)', textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 700 : 400, borderLeft: isActive ? '2px solid var(--red)' : '2px solid transparent', transition: 'all .15s' })}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
-              {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) => `sidebar-link${isActive ? ' is-active' : ''}`}
+            >
+              <span className="sidebar-link-icon">{item.icon}</span>
+              <span className="sidebar-link-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
-        {!collapsed && (
-          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-            {[{ label: 'Chaine', ok: channelReady }, { label: 'Claude API', ok: apiReady }].map(s => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.ok ? 'var(--green)' : 'var(--muted2)', boxShadow: s.ok ? '0 0 6px var(--green)' : 'none' }} />
-                <span style={{ fontSize: 11, color: s.ok ? 'var(--green)' : 'var(--muted)', whiteSpace: 'nowrap' }}>{s.label} {s.ok ? '✓' : '—'}</span>
-              </div>
-            ))}
-          </div>
+
+        <div className="sidebar-status-panel">
+          {[{ label: 'Chaine', ok: channelReady }, { label: 'Claude API', ok: apiReady }].map(status => (
+            <div key={status.label} className="sidebar-status-row">
+              <div
+                className="sidebar-status-dot"
+                style={{
+                  background: status.ok ? 'var(--green)' : 'var(--muted2)',
+                  boxShadow: status.ok ? '0 0 6px var(--green)' : 'none',
+                }}
+              />
+              <span style={{ fontSize: 11, color: status.ok ? 'var(--green)' : 'var(--muted)', whiteSpace: 'nowrap' }}>
+                {status.label} {status.ok ? 'OK' : '--'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={() => setCollapsed(value => !value)}
+            className="sidebar-toggle"
+            aria-label={collapsed ? 'Elargir la barre laterale' : 'Reduire la barre laterale'}
+          >
+            {collapsed ? '>' : '<'}
+          </button>
         )}
-        <button onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', color: 'var(--muted)', padding: '12px', fontSize: 18, cursor: 'pointer', borderTop: '1px solid var(--border)' }}>
-          {collapsed ? '›' : '‹'}
-        </button>
       </aside>
-      <main style={{ marginLeft: collapsed ? 64 : 220, flex: 1, transition: 'margin-left .25s ease', minHeight: '100vh' }}>
-        <Outlet />
-      </main>
+
+      <div className="app-main-shell" style={isMobile ? undefined : { marginLeft: sidebarWidth }}>
+        <header className="mobile-topbar">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label="Ouvrir le menu"
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen(true)}
+          >
+            MENU
+          </button>
+          <div className="mobile-topbar-brand">
+            <div className="sidebar-brand-mark">▶</div>
+            <span className="sidebar-brand-text" style={{ display: 'inline' }}>
+              Virax<span style={{ color: 'var(--red)' }}>Studio</span>
+            </span>
+          </div>
+          <div
+            className="status-chip"
+            style={{ background: channelReady ? 'rgba(0,196,140,0.15)' : 'var(--bg3)', color: channelReady ? 'var(--green)' : 'var(--muted)' }}
+          >
+            {channelReady ? 'Chaine OK' : 'Config'}
+          </div>
+        </header>
+
+        <main className="app-main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
