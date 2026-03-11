@@ -9,7 +9,7 @@ import Publisher from './pages/Publisher.jsx'
 import Settings from './pages/Settings.jsx'
 import {
   createRun,
-  getGoogleAuthRedirect,
+  buildGoogleAuthStartUrl,
   getRunDetail,
   getSession,
   listIntegrations,
@@ -175,7 +175,8 @@ export default function App() {
     let cancelled = false
     const tick = async () => {
       try {
-        const response = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/v1/health')
+        const healthUrl = `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}/api/v1/health`
+        const response = await fetch(healthUrl)
         if (!response.ok) throw new Error('health check failed')
         const payload = await response.json()
         if (!cancelled) {
@@ -270,13 +271,8 @@ export default function App() {
     async refreshAll() {
       await refreshWorkspace({ preserveSelection: true })
     },
-    async startGoogleLogin() {
-      try {
-        const redirect = await getGoogleAuthRedirect()
-        window.location.href = redirect.url
-      } catch (error) {
-        pushNotice('error', toErrorMessage(error))
-      }
+    startGoogleLogin() {
+      window.location.href = buildGoogleAuthStartUrl()
     },
     async logoutOwner() {
       try {

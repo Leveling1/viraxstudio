@@ -15,6 +15,10 @@ function buildUrl(path) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path
 }
 
+export function buildGoogleAuthStartUrl() {
+  return buildUrl('/api/v1/auth/google/start?mode=redirect')
+}
+
 async function request(path, options = {}) {
   const headers = new Headers(options.headers || {})
   const hasBody = options.body !== undefined

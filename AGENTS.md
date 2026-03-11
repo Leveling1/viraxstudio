@@ -27,7 +27,7 @@
 ## Securite a respecter
 - Le chiffrement at-rest passe par `APP_ENCRYPTION_KEY` et `packages/shared/src/server/encryption.ts`.
 - Toute nouvelle integration se stocke dans `integrations` + `integration_secrets`, jamais dans le navigateur.
-- L'auth owner doit continuer a verifier `OWNER_GOOGLE_EMAIL` cote serveur.
+- L'auth owner doit verifier `OWNER_GOOGLE_EMAIL` seulement si cette variable est definie; sinon le premier compte YouTube connecte devient l'owner de reference cote serveur.
 - Les cookies de session restent `httpOnly`; ne pas basculer la session vers `localStorage`.
 - Ne jamais commit de secret, token, dump DB ou media genere reel.
 
