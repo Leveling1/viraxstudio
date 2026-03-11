@@ -8,7 +8,7 @@ const envSchema = z.object({
   API_PUBLIC_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
-  OWNER_GOOGLE_EMAIL: z.string().email(),
+  OWNER_GOOGLE_EMAIL: z.string().email().optional(),
   COOKIE_SECRET: z.string().min(32),
   APP_ENCRYPTION_KEY: z.string().min(10),
   SESSION_TTL_HOURS: z.coerce.number().int().positive().default(168),

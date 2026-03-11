@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { integrations, integrationSecrets, youtubeChannels, auditLogs } from '@viraxstudio/shared/db/schema'
 import { integrationProviders } from '@viraxstudio/shared/contracts'
 import { encryptValue, maskSecret } from '@viraxstudio/shared/server/encryption'
@@ -11,6 +11,10 @@ const providerLabels: Record<string, string> = {
   elevenlabs: 'ElevenLabs',
   youtube: 'YouTube Channel',
   pexels: 'Pexels',
+}
+
+function getAuditActor() {
+  return env.OWNER_GOOGLE_EMAIL ?? 'owner'
 }
 
 export async function ensureDefaultRecords() {
@@ -32,6 +36,22 @@ async function getLatestSecret(integrationId: string) {
     where: (table, { eq }) => eq(table.integrationId, integrationId),
     orderBy: (table, { desc }) => [desc(table.createdAt)],
   })
+}
+
+export async function getYoutubeIntegration() {
+  await ensureDefaultRecords()
+  return db.query.integrations.findFirst({ where: (table, { eq }) => eq(table.provider, 'youtube') })
+}
+
+export async function getAuthorizedOwnerEmail() {
+  if (env.OWNER_GOOGLE_EMAIL) {
+    return env.OWNER_GOOGLE_EMAIL.toLowerCase()
+  }
+  const youtube = await getYoutubeIntegration()
+  const storedOwner = youtube?.metadata && typeof (youtube.metadata as Record<string, unknown>).ownerEmail === 'string'
+    ? String((youtube.metadata as Record<string, unknown>).ownerEmail)
+    : null
+  return storedOwner ? storedOwner.toLowerCase() : null
 }
 
 export async function listIntegrations() {
@@ -86,7 +106,7 @@ export async function upsertSecretIntegration(provider: 'anthropic' | 'elevenlab
   })
 
   await db.insert(auditLogs).values({
-    actor: env.OWNER_GOOGLE_EMAIL,
+    actor: getAuditActor(),
     action: 'integration.secret.updated',
     entityType: 'integration',
     entityId: integration.id,
